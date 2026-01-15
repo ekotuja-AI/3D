@@ -1,0 +1,106 @@
+{
+  "collections": [
+    {
+      "name": "Inteligência Artificial",
+      "position": [-20, 10, 0],
+      "color": 65535
+    },
+    {
+      "name": "LLM",
+      "position": [-22, 12, 2],
+      "color": 16744448
+    },
+    {
+      "name": "Open Ai",
+      "position": [-23, 11, 2],
+      "color": 16753920
+    },
+    {
+      "name": "Direito",
+      "position": [0, 15, -10],
+      "color": 16745088
+    },
+    {
+      "name": "Código Penal",
+      "position": [2, 12, -8],
+      "color": 14286848
+    },
+    {
+      "name": "Código Civil",
+      "position": [1, 13, -9],
+      "color": 16098851
+    },
+    {
+      "name": "GPUs & Hardware",
+      "position": [20, 5, 5],
+      "color": 16724934
+    },
+    {
+      "name": "Memória RAM",
+      "position": [22, 7, 6],
+      "color": 65280
+    },
+    {
+      "name": "Neurociência",
+      "position": [-10, -15, 5],
+      "color": 6789670
+    },
+    {
+      "name": "Psicologia",
+      "position": [-12, -12, 4],
+      "color": 8965290
+    },
+    {
+      "name": "Neurônios",
+      "position": [-11, -10, 6],
+      "color": 32768
+    },
+    {
+      "name": "Medicina",
+      "position": [-8, -10, 6],
+      "color": 16760576
+    },
+    {
+      "name": "Metabologia",
+      "position": [-9, -8, 7],
+      "color": 39423
+    },
+    {
+      "name": "Bioquímica",
+      "position": [-7, -9, 7],
+      "color": 10027008
+    },
+    {
+      "name": "Hemograma",
+      "position": [-6, -11, 7],
+      "color": 8421504
+    },
+    {
+      "name": "Data Engineering",
+      "position": [15, -10, -5],
+      "color": 6724047
+    },
+    {
+      "name": "Data Science",
+      "position": [12, -8, -3],
+      "color": 3407663
+    },
+    {
+      "name": "Finanças",
+      "position": [0, -5, 20],
+      "color": 13480959
+    }
+    ,
+    {
+      "name": "Gestão Financeira",
+      "position": [5, -2, 18],
+      "color": 10066329
+    }
+    ,
+    {
+      "name": "Machine Lerning",
+      "position": [-5, 0, 10],
+      "color": 16711935
+    }
+  ]
+}

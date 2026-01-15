@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Semantic Space – Landing 3D</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #0a1a2a, #020409);
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+
+    #tooltip {
+      position: absolute;
+      padding: 6px 10px;
+      background: rgba(0,0,0,0.75);
+      border-radius: 6px;
+      font-size: 13px;
+      pointer-events: none;
+      display: none;
+      white-space: nowrap;
+    }
+
+    .title {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 22px;
+      letter-spacing: 1px;
+      opacity: 0.9;
+    }
+
+    .subtitle {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 13px;
+      opacity: 0.6;
+    }
+  </style>
+  <style>
+    /* Sidebar */
+    #sidebar {
+      position: absolute;
+      right: 12px;
+      top: 80px;
+      width: 220px;
+      max-height: calc(100vh - 120px);
+      overflow: auto;
+      background: rgba(0,0,0,0.45);
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      z-index: 4;
+      backdrop-filter: blur(4px);
+    }
+
+    #sidebar h3 { margin: 0 0 8px 0; font-size: 14px; text-align: center; }
+    .col-item { padding: 6px 8px; border-radius: 4px; cursor: pointer; margin-bottom: 6px; background: rgba(255,255,255,0.03); }
+    .col-item:hover { background: rgba(255,255,255,0.06); }
+  </style>
+  <style>
+    .label {
+      color: #fff;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+      user-select: none;
+    }
+
+    /* keep tooltip above labels */
+    #tooltip { z-index: 2; }
+    .label { z-index: 1; }
+  </style>
+</head>
+<body>
+
+<div class="title">Explorar Conhecimento</div>
+<div class="subtitle">Navegação por Espaço Semântico 3D</div>
+<div id="tooltip"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.158.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
+  import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+  import { CSS2DRenderer, CSS2DObject } from 'https://unpkg.com/three@0.158.0/examples/jsm/renderers/CSS2DRenderer.js';
+
+  // Cena
+  const scene = new THREE.Scene();
+
+  // Câmera
+  const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 0, 80);
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  document.body.appendChild(renderer.domElement);
+
+  // Controles (use the named import)
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+
+  // Luz
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const dirLight = new THREE.DirectionalLight(0x88ccff, 1);
+  dirLight.position.set(10, 20, 30);
+  scene.add(dirLight);
+
+  // Renderer for HTML labels
+  const labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  labelRenderer.domElement.style.zIndex = '1000';
+  document.body.appendChild(labelRenderer.domElement);
+
+  // Dados semânticos carregados do mock JSON
+  const nodes = [];
+  const geometry = new THREE.SphereGeometry(2.2, 32, 32);
+
+  // helper: create a sprite with text drawn on a canvas
+  function createTextSprite(message, parameters = {}) {
+    const fontface = parameters.fontface || 'Arial';
+    const fontsize = parameters.fontsize || 48;
+    const borderThickness = parameters.borderThickness || 4;
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    context.font = fontsize + 'px ' + fontface;
+    // measure
+    const metrics = context.measureText(message);
+    const textWidth = Math.ceil(metrics.width);
+    const padding = borderThickness * 2;
+    const textHeight = Math.ceil(fontsize * 1.2);
+    canvas.width = textWidth + padding * 2;
+    canvas.height = textHeight + padding * 2;
+    // redraw with proper size
+    context.font = fontsize + 'px ' + fontface;
+    context.textBaseline = 'top';
+    // background (transparent)
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    // stroke for contrast
+    context.lineWidth = Math.max(2, Math.floor(fontsize * 0.08));
+    context.strokeStyle = 'rgba(0,0,0,0.9)';
+    context.fillStyle = 'white';
+    const x = padding;
+    const y = padding;
+    context.strokeText(message, x, y);
+    context.fillText(message, x, y);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    material.depthTest = false;
+    material.depthWrite = false;
+    const sprite = new THREE.Sprite(material);
+    // scale sprite so text size is reasonable in world units
+    const scaleFactor = parameters.scaleFactor || 0.12; // tweak if needed
+    sprite.scale.set(canvas.width * scaleFactor, canvas.height * scaleFactor, 1);
+    sprite.renderOrder = 9999;
+    // store canvas dimensions for pixel-scaling later
+    sprite.userData.canvasWidth = canvas.width;
+    sprite.userData.canvasHeight = canvas.height;
+    return sprite;
+  }
+
+  async function loadCollections() {
+    let data = null;
+    try {
+      const resp = await fetch('data/collections.json');
+      if (!resp.ok) throw new Error('HTTP error ' + resp.status);
+      data = await resp.json();
+    } catch (err) {
+      console.error('Falha ao carregar data/collections.json:', err);
+      // create a small on-screen notice so user knows what happened
+      const notice = document.createElement('div');
+      notice.style.position = 'absolute';
+      notice.style.left = '12px';
+      notice.style.top = '80px';
+      notice.style.padding = '8px 12px';
+      notice.style.background = 'rgba(255,80,80,0.12)';
+      notice.style.color = '#ffb3b3';
+      notice.style.border = '1px solid rgba(255,80,80,0.18)';
+      notice.style.borderRadius = '6px';
+      notice.style.fontSize = '13px';
+      notice.textContent = 'Aviso: não foi possível carregar data/collections.json — usando dados de fallback.';
+      document.body.appendChild(notice);
+
+      // fallback data (visible test data) so the scene still shows something
+      data = {
+        collections: [
+          { name: 'Teste A', position: [-15, 8, 0], color: 0xff8844 },
+          { name: 'Teste B', position: [0, 0, 0], color: 0x44ff88 },
+          { name: 'Teste C', position: [15, -6, 5], color: 0x4488ff }
+        ]
+      };
+    }
+
+    // create sidebar
+    const sidebar = document.createElement('div');
+    sidebar.id = 'sidebar';
+    sidebar.innerHTML = '<h3>Coleções</h3>';
+    document.body.appendChild(sidebar);
+
+    data.collections.forEach(t => {
+      const material = new THREE.MeshStandardMaterial({
+        color: t.color,
+        emissive: t.color,
+        emissiveIntensity: 0.25
+      });
+
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.set(...t.position);
+      sphere.userData = { name: t.name };
+      scene.add(sphere);
+      nodes.push(sphere);
+
+      // create a sprite with the collection name and put it at the center of the node
+      const sprite = createTextSprite(t.name, { fontsize: 48 });
+      // small offset forward so the sprite sits slightly above the sphere surface
+      sprite.position.set(0, 0, 0.6);
+      sphere.add(sprite);
+      sphere.userData.sprite = sprite;
+
+      // add to sidebar
+      const item = document.createElement('div');
+      item.className = 'col-item';
+      item.textContent = t.name;
+      item.addEventListener('click', () => focusOnNode(sphere));
+      sidebar.appendChild(item);
+    });
+  }
+
+  loadCollections();
+
+  // Axes helper
+  const axes = new THREE.AxesHelper(12);
+  scene.add(axes);
+
+  // Raycaster
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  const tooltip = document.getElementById("tooltip");
+  let hovered = null;
+  let lastMouseScreen = { x: 0, y: 0 };
+
+  window.addEventListener("mousemove", e => {
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    lastMouseScreen.x = e.clientX;
+    lastMouseScreen.y = e.clientY;
+  });
+
+  window.addEventListener("click", () => {
+    if (hovered) {
+      alert("Assunto selecionado: " + hovered.userData.name);
+      // aqui você pode redirecionar, abrir modal ou chamar API
+    }
+  });
+
+  function focusOnNode(node) {
+    // smoothly move camera to look at node
+    const targetPos = new THREE.Vector3().copy(node.position);
+    // set a position offset back along the camera's z axis
+    const offset = new THREE.Vector3(0, 0, 30);
+    const newPos = targetPos.clone().add(offset);
+    // immediate set (for simplicity)
+    camera.position.copy(newPos);
+    controls.target.copy(targetPos);
+  }
+
+  // adjust sprite scales so text appears at roughly `desiredPixelHeight` on screen
+  function updateSpriteScales(desiredPixelHeight = 36) {
+    const vFOV = THREE.MathUtils.degToRad(camera.fov); // vertical fov in radians
+    const canvasHeight = renderer.domElement.clientHeight;
+
+    nodes.forEach(node => {
+      const sprite = node.userData.sprite;
+      if (!sprite || !sprite.userData) return;
+
+      const worldPos = new THREE.Vector3();
+      node.getWorldPosition(worldPos);
+      const distance = camera.position.distanceTo(worldPos);
+
+      // height in world units at this distance that corresponds to one pixel
+      const heightInWorld = 2 * Math.tan(vFOV / 2) * distance;
+      const worldUnitsPerPixel = heightInWorld / canvasHeight;
+
+      const desiredWorldHeight = desiredPixelHeight * worldUnitsPerPixel;
+
+      const aspect = sprite.userData.canvasWidth / sprite.userData.canvasHeight;
+      const desiredWorldWidth = desiredWorldHeight * aspect;
+
+      // clamp to avoid extremely large/small sprites
+      const minWorld = 0.5; // world units
+      const maxWorld = 20; // world units
+      const finalWidth = Math.min(maxWorld, Math.max(minWorld, desiredWorldWidth));
+      const finalHeight = Math.min(maxWorld, Math.max(minWorld, desiredWorldHeight));
+
+      sprite.scale.set(finalWidth, finalHeight, 1);
+    });
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // Interseção
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(nodes);
+
+    if (intersects.length > 0) {
+      const obj = intersects[0].object;
+      if (hovered !== obj) {
+        if (hovered) {
+          hovered.scale.set(1, 1, 1);
+          if (hovered.userData && hovered.userData.labelDiv) hovered.userData.labelDiv.style.display = 'none';
+        }
+        hovered = obj;
+        hovered.scale.set(1.4, 1.4, 1.4);
+        if (hovered.userData && hovered.userData.labelDiv) hovered.userData.labelDiv.style.display = 'block';
+      }
+
+      tooltip.style.display = "block";
+      tooltip.style.left = lastMouseScreen.x + 12 + "px";
+      tooltip.style.top = lastMouseScreen.y + 12 + "px";
+      tooltip.innerText = obj.userData.name;
+    } else {
+      if (hovered) {
+        hovered.scale.set(1, 1, 1);
+        if (hovered.userData && hovered.userData.labelDiv) hovered.userData.labelDiv.style.display = 'none';
+      }
+      hovered = null;
+      tooltip.style.display = "none";
+    }
+
+    controls.update();
+    // update sprite scales (keep text readable at a fixed pixel height)
+    updateSpriteScales(36);
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+  }
+
+  animate();
+
+  // Resize
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+</body>
+</html>
+
