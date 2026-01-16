@@ -253,9 +253,45 @@
 
   loadCollections();
 
-  // Axes helper
-  const axes = new THREE.AxesHelper(12);
-  scene.add(axes);
+  // Full axes lines (negative and positive) with labels
+  const AXIS_LEN = 18;
+  (function createFullAxes(len) {
+    const positions = new Float32Array([
+      -len, 0, 0,  len, 0, 0,
+      0, -len, 0,  0, len, 0,
+      0, 0, -len,  0, 0, len
+    ]);
+
+    const colors = new Float32Array([
+      1, 0, 0,  1, 0, 0, // X axis red
+      0, 1, 0,  0, 1, 0, // Y axis green
+      0, 0, 1,  0, 0, 1  // Z axis blue
+    ]);
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const mat = new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 2 });
+    const lines = new THREE.LineSegments(geom, mat);
+    scene.add(lines);
+
+    // axis labels (+/-)
+    const labelData = [
+      { t: '+X', p: [len + 1.2, 0, 0] },
+      { t: '-X', p: [-len - 1.2, 0, 0] },
+      { t: '+Y', p: [0, len + 1.2, 0] },
+      { t: '-Y', p: [0, -len - 1.2, 0] },
+      { t: '+Z', p: [0, 0, len + 1.2] },
+      { t: '-Z', p: [0, 0, -len - 1.2] }
+    ];
+
+    labelData.forEach(ld => {
+      const s = createTextSprite(ld.t, { fontsize: 36, scaleFactor: 0.08 });
+      s.position.set(ld.p[0], ld.p[1], ld.p[2]);
+      scene.add(s);
+    });
+  })(AXIS_LEN);
 
   // Raycaster
   const raycaster = new THREE.Raycaster();
